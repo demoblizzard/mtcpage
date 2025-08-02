@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Interactive Calendar with Notes</title>
+<p><a href="https://docs.google.com/document/d/130CCo9vKiKzBnkyoqM93XzAA6YpJJqUP/edit?tab=t.0#heading=h.ogyuzle7lvf" target="_blank">Advanced Objectives</a></p>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 700px;
+    margin: 30px auto;
+  }
+  #calendarHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  #calendarHeader button {
+    padding: 6px 12px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #monthYear {
+    font-size: 20px;
+    font-weight: bold;
+  }
+  #calendar {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    border: 1px solid #ccc;
+  }
+  .weekday {
+    font-weight: bold;
+    background: #f0f0f0;
+    padding: 8px 0;
+    text-align: center;
+  }
+  .day {
+    border: 1px solid #ccc;
+    min-height: 90px;
+    padding: 6px 6px 4px;
+    cursor: pointer;
+    position: relative;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+  }
+  .day.empty {
+    background: #f9f9f9;
+    cursor: default;
+  }
+  .day-number {
+    font-weight: bold;
+    margin-bottom: 4px;
+  }
+  .note {
+    flex-grow: 1;
+    font-size: 0.85em;
+    color: #444;
+    white-space: pre-wrap;
+    overflow-y: auto;
+  }
+  .day:hover:not(.empty) {
+    background: #e6f7ff;
+  }
+</style>
+</head>
+<body>
+
+<div id="calendarHeader">
+  <button id="prevMonthBtn">&lt; Prev</button>
+  <div id="monthYear"></div>
+  <button id="nextMonthBtn">Next &gt;</button>
+</div>
+
+<div id="calendar"></div>
+
+<script>
+  const calendarDiv = document.getElementById('calendar');
+  const monthYearDiv = document.getElementById('monthYear');
+  const prevMonthBtn = document.getElementById('prevMonthBtn');
+  const nextMonthBtn = document.getElementById('nextMonthBtn');
+
+  let currentYear = new Date().getFullYear();
+  let currentMonth = new Date().getMonth(); // 0 = Jan, 11 = Dec
+
+  const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  function buildCalendar(year, month) {
+    calendarDiv.innerHTML = '';
+
+    // Show month and year
+    const dateObj = new Date(year, month);
+    monthYearDiv.textContent = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+    // Add weekday headers
+    weekdays.forEach(day => {
+      const weekdayDiv = document.createElement('div');
+      weekdayDiv.className = 'weekday';
+      weekdayDiv.textContent = day;
+      calendarDiv.appendChild(weekdayDiv);
+    });
+
+    // Find out first day of month and days in month
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Fill blank days before month start
+    for(let i = 0; i < firstDay; i++) {
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'day empty';
+      calendarDiv.appendChild(emptyDiv);
+    }
+
+    // Create day cells
+    for(let day=1; day <= daysInMonth; day++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const dayDiv = document.createElement('div');
+      dayDiv.className = 'day';
+
+      // Day number
+      const dayNumber = document.createElement('div');
+      dayNumber.className = 'day-number';
+      dayNumber.textContent = day;
+      dayDiv.appendChild(dayNumber);
+
+      // Note for this day
+      const savedNote = localStorage.getItem('note-' + dateStr);
+      const noteDiv = document.createElement('div');
+      noteDiv.className = 'note';
+      noteDiv.textContent = savedNote || '';
+      dayDiv.appendChild(noteDiv);
+
+      // Click to edit note
+      dayDiv.addEventListener('click', () => {
+        const newNote = prompt(`Add/Edit note for ${dateStr}:`, savedNote || '');
+        if (newNote === null) return; // cancel
+        if (newNote.trim() === '') {
+          localStorage.removeItem('note-' + dateStr);
+        } else {
+          localStorage.setItem('note-' + dateStr, newNote.trim());
+        }
+        buildCalendar(currentYear, currentMonth);
+      });
+
+      calendarDiv.appendChild(dayDiv);
+    }
+  }
+
+  prevMonthBtn.addEventListener('click', () => {
+    currentMonth--;
+    if (currentMonth < 0) {
+      currentMonth = 11;
+      currentYear--;
+    }
+    buildCalendar(currentYear, currentMonth);
+  });
+
+  nextMonthBtn.addEventListener('click', () => {
+    currentMonth++;
+    if (currentMonth > 11) {
+      currentMonth = 0;
+      currentYear++;
+    }
+    buildCalendar(currentYear, currentMonth);
+  });
+
+  // Initial build
+  buildCalendar(currentYear, currentMonth);
+</script>
+
+<li class="nav-item active"><a class="nav-link" href="index.html">Home Page</a></li>
+
+</body>
+</html>
+
+
